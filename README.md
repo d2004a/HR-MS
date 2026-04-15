@@ -1,4 +1,4 @@
-# Employee Leave & Attendance Management System
+# HR Management System
 
 A comprehensive Full-Stack HR Management System built with the MERN stack (MongoDB, Express, React, Node.js) + Vite and Tailwind CSS. The application features a **Premium Light-Mode custom-themed UI** designed for a modern, professional experience.
 
