@@ -17,18 +17,13 @@ const app = express();
  * 3. ABSOLUTE FIRST MIDDLEWARE - Unified CORS & Preflight
  */
 app.use((req, res, next) => {
-  const allowedOrigin = "https://hr-ms-frontend-ten.vercel.app";
-  const origin = req.headers.origin;
-  
-  if (origin === allowedOrigin || !origin) {
-    res.header("Access-Control-Allow-Origin", origin || "*");
-  }
-  
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Headers", "*");
   res.header("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") {
+    console.log(`[DEBUG-OPTIONS] Headers: ${JSON.stringify(req.headers)}`);
     return res.status(200).send();
   }
   next();
@@ -46,6 +41,7 @@ app.use(express.json());
 /**
  * 5. Health Routes
  */
+app.get('/test-v5', (req, res) => res.status(200).send('V5 CONNECTIVITY: SUCCESS'));
 app.get('/', (req, res) => res.status(200).send('HRMS ROOT SERVER: DEPLOYED AND ALIVE'));
 app.get('/api/health', (req, res) => res.status(200).json({ status: 'active', entry: 'root' }));
 
