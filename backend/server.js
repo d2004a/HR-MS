@@ -10,42 +10,38 @@ const app = express();
 
 
 
-// ✅ 1. CORS (ONLY THIS — no manual headers)
-app.use(cors({
-  origin: "https://hr-ms-frontend-ten.vercel.app",
-  credentials: true,
-  
-}));
-
-// ✅ 2. Handle preflight globally
+// 1. UNIFIED CORS & PREFLIGHT (Failsafe)
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://hr-ms-frontend-ten.vercel.app");
+  const allowedOrigin = "https://hr-ms-frontend-ten.vercel.app";
+  const origin = req.headers.origin;
+  
+  if (origin === allowedOrigin || !origin) {
+    res.header("Access-Control-Allow-Origin", origin || "*");
+  }
+  
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.header("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // ✅ THIS fixes everything
+    console.log(`[CORS] Preflight handled for: ${req.originalUrl}`);
+    return res.status(200).send();
   }
-
   next();
 });
 
-// ✅ 3. Middleware
+// 2. DIAGNOSTIC REQUEST LOGGING
+app.use((req, res, next) => {
+  console.log(`[HIT] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
+// 3. CORE MIDDLEWARE
 app.use(express.json());
 
-// ✅ 4. Health Check
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
-
-app.get('/test', (req, res) => {
-  res.send("TEST WORKING");
-});
-
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'active', time: new Date() });
-});
+// 4. HEALTH/DIAGNOSTIC ROUTES
+app.get('/', (req, res) => res.status(200).send('SERVER STATUS: ALIVE AND RUNNING'));
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'active', time: new Date() }));
 
 // ✅ 5. Routes
 app.use('/api/auth', require('./routes/authRoutes'));
