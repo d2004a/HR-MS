@@ -17,8 +17,9 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://hr-ms-frontend-ten.vercel.app/"
+    "https://hr-ms-frontend-ten.vercel.app"
   ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
 app.use(express.json());
