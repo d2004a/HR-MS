@@ -14,7 +14,13 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://hr-ms-frontend-ten.vercel.app/"
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes will be imported here
