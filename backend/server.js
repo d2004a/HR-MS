@@ -8,13 +8,6 @@ const bcrypt = require('bcryptjs');
 dotenv.config();
 const app = express();
 
-app.options('*', (req, res) => {
-  res.header("Access-Control-Allow-Origin", "https://hr-ms-frontend-ten.vercel.app");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-  return res.sendStatus(200);
-});
 
 
 // ✅ 1. CORS (ONLY THIS — no manual headers)
@@ -26,9 +19,15 @@ app.use(cors({
 
 // ✅ 2. Handle preflight globally
 app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://hr-ms-frontend-ten.vercel.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
+    return res.sendStatus(200); // ✅ THIS fixes everything
   }
+
   next();
 });
 
