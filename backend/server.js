@@ -13,15 +13,23 @@ connectDB();
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://hr-ms-frontend-ten.vercel.app/"
+];
+
 // Middleware
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://hr-ms-frontend-ten.vercel.app"
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed"));
+    }
+  },
   credentials: true
 }));
+
 app.use(express.json());
 
 // Routes will be imported here
