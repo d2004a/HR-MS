@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+    let url = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    // Remove trailing slash if present to avoid double slashes in requests
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+    baseURL: getBaseURL(),
 });
 
 // Add a request interceptor

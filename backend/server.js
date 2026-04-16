@@ -14,24 +14,26 @@ connectDB();
 const app = express();
 
 
-// ✅ CORS (FINAL FIX)
+// ✅ Improved CORS Configuration
+const allowedOrigins = [
+  "https://hr-ms-frontend-ten.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000"
+];
+
 app.use(cors({
-  origin: "https://hr-ms-frontend-ten.vercel.app",
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
-
-// ✅ HANDLE PREFLIGHT (VERY IMPORTANT)
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://hr-ms-frontend-ten.vercel.app");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
 
 // ✅ Middleware
 app.use(express.json());
