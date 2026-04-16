@@ -39,6 +39,10 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
+app.get('/test', (req, res) => {
+  res.send("TEST WORKING");
+});
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'active', time: new Date() });
 });
