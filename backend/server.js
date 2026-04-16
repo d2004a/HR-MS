@@ -15,7 +15,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://hr-ms-frontend-ten.vercel.app/"
+  "https://hr-ms-frontend-ten.vercel.app"
 ];
 
 // Middleware
@@ -29,6 +29,8 @@ app.use(cors({
   },
   credentials: true
 }));
+
+app.options("*", cors());
 
 app.use(express.json());
 
