@@ -104,6 +104,7 @@ Seeding admin credentials manually
 Structuring role-based access (Admin vs Employee)
 Supported debugging strategies and optimization ideas, but final implementation was written manually.
 Used Antigravity for UI/UX improvements and testing insights to refine the user experience.
+Used chat gpt for deep debugging for my cors related issues and deployment issues
 
 
 ## Manual Implementation & Business Logic
