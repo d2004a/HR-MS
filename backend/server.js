@@ -8,14 +8,18 @@ const bcrypt = require('bcryptjs');
 dotenv.config();
 const app = express();
 
+/**
+ * 1. SECURE CORS CONFIGURATION
+ * Restricts access to your specific frontend and local development environment.
+ */
+const allowedOrigins = [
+  "https://hr-ms-frontend-ten.vercel.app",
+  "http://localhost:5173"
+];
 
-
-// 1. UNIFIED CORS & PREFLIGHT (Failsafe)
 app.use((req, res, next) => {
-  const allowedOrigin = "https://hr-ms-frontend-ten.vercel.app";
   const origin = req.headers.origin;
-  
-  if (origin === allowedOrigin || !origin) {
+  if (allowedOrigins.includes(origin) || !origin) {
     res.header("Access-Control-Allow-Origin", origin || "*");
   }
   
@@ -24,50 +28,48 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") {
-    console.log(`[CORS] Preflight handled for: ${req.originalUrl}`);
     return res.status(200).send();
   }
   next();
 });
 
-// 2. DIAGNOSTIC REQUEST LOGGING
-app.use((req, res, next) => {
-  console.log(`[HIT] ${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
-});
-
-// 3. CORE MIDDLEWARE
+/**
+ * 2. MIDDLEWARE
+ */
 app.use(express.json());
 
-// 4. HEALTH/DIAGNOSTIC ROUTES
-app.get('/', (req, res) => res.status(200).send('SERVER STATUS: ALIVE AND RUNNING'));
-app.get('/api/health', (req, res) => res.status(200).json({ status: 'active', time: new Date() }));
+/**
+ * 3. HEALTH & STATUS ROUTES
+ */
+app.get('/', (req, res) => res.status(200).send('HRMS API: Online'));
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'active', timestamp: new Date() }));
 
-// ✅ 5. Routes
+/**
+ * 4. APPLICATION ROUTES
+ */
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
-// ✅ 6. 404 handler
+/**
+ * 5. ERROR & 404 HANDLERS
+ */
 app.use((req, res) => {
-  console.error(`404 - Not Found: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({
-    message: 'Route not found',
-    method: req.method,
-    url: req.originalUrl
-  });
+  res.status(404).json({ message: 'Resource not found', path: req.originalUrl });
 });
 
-// ✅ 7. Server Start
+/**
+ * 6. SERVER INITIALIZATION
+ */
 const PORT = process.env.PORT || 10000;
 
 const startServer = async () => {
   try {
-    console.log('Connecting to Database...');
+    console.log('[INIT] Connecting to Database...');
     await connectDB();
 
-    // Seed Admin
+    // Seed Admin if not exists
     const adminExists = await User.findOne({ email: 'admin@hrms.com' });
     if (!adminExists) {
       const salt = await bcrypt.genSalt(10);
@@ -80,16 +82,16 @@ const startServer = async () => {
         role: 'admin'
       });
 
-      console.log('Admin user seeded');
+      console.log('[INIT] Admin user seeded');
     }
   } catch (error) {
-    console.error('Startup Error:', error.message);
+    console.error('[INIT] Startup Error:', error.message);
   }
 };
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`[SERVER] HRMS Backend active on port ${PORT}`);
     startServer();
   });
 }
