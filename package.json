@@ -4,9 +4,9 @@
   "description": "Root configuration for unified deployment",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "install-backend": "cd backend && npm install",
-    "build": "npm run install-backend"
+    "start": "node index.js",
+    "install-backend": "npm install --prefix backend",
+    "postinstall": "npm run install-backend"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
