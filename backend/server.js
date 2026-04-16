@@ -14,25 +14,17 @@ connectDB();
 const app = express();
 
 
-// ✅ Improved CORS Configuration
-const allowedOrigins = [
-  "https://hr-ms-frontend-ten.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:3000"
-];
+// ✅ Debugging Middleware: Log all requests
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin}`);
+  next();
+});
 
+// ✅ Permissive CORS for Debugging
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow all origins during debugging
   credentials: true,
-  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200
 }));
 
 // ✅ Middleware
@@ -49,6 +41,26 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 // ✅ Basic route
 app.get('/', (req, res) => {
     res.send('API is running...');
+});
+
+// ✅ 404 Catch-all for Debugging
+app.use((req, res) => {
+    console.error(`404 - Not Found: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ 
+        message: 'Route not found', 
+        method: req.method, 
+        url: req.originalUrl 
+    });
+});
+
+// ✅ Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('SERVER ERROR:', err.stack);
+    res.status(500).json({ 
+        message: 'Server Error', 
+        error: err.message,
+        path: req.originalUrl
+    });
 });
 
 // ✅ Seed Admin User
