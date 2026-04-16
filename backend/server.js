@@ -13,20 +13,12 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://hr-ms-frontend-ten.vercel.app"
-];
+
 
 // Middleware
+
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("CORS not allowed"));
-    }
-  },
+  origin: "https://hr-ms-frontend-ten.vercel.app",
   credentials: true
 }));
 
