@@ -7,20 +7,9 @@ const bcrypt = require('bcryptjs');
 
 // Load env vars
 dotenv.config();
-
-// Connect to database
-connectDB();
-
 const app = express();
 
-
-// ✅ Debugging Middleware: Log all requests
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} - Origin: ${req.headers.origin}`);
-  next();
-});
-
-// ✅ ROBUST CORS (Manual + Package fallback)
+// 1. IMMEDIATE CORS & PREFLIGHT (Must be very first)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   res.header("Access-Control-Allow-Origin", origin || "*");
@@ -28,20 +17,20 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   
-  // Handle Preflight (OPTIONS)
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
-  
   next();
 });
 
-// ✅ CORS Package as backup
-app.use(cors({
-  origin: true,
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
+// 2. Health Checks (Must be before any DB-dependent middleware)
+app.get('/', (req, res) => res.status(200).send('HRMS Backend is ALIVE and Running!'));
+app.get('/api/health', (req, res) => res.status(200).json({ status: 'active', time: new Date() }));
+
+
+// 3. Middlewares
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
 
 // ✅ Middleware
 app.use(express.json());
@@ -69,48 +58,37 @@ app.use((req, res) => {
     });
 });
 
-// ✅ Global Error Handler
-app.use((err, req, res, next) => {
-    console.error('SERVER ERROR:', err.stack);
-    res.status(500).json({ 
-        message: 'Server Error', 
-        error: err.message,
-        path: req.originalUrl
-    });
-});
+// 5. Async Startup
+const PORT = process.env.PORT || 5000;
 
-// ✅ Seed Admin User
-const seedAdmin = async () => {
+const startServer = async () => {
     try {
+        console.log('Connecting to Database...');
+        await connectDB();
+        
+        // Seed Admin gracefully
         const adminExists = await User.findOne({ email: 'admin@hrms.com' });
         if (!adminExists) {
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash('admin123', salt);
-
             await User.create({
                 fullName: 'System Admin',
                 email: 'admin@hrms.com',
                 password: hashedPassword,
                 role: 'admin'
             });
-
-            console.log('Admin user seeded successfully');
+            console.log('Admin user seeded');
         }
     } catch (error) {
-        console.error('Error seeding admin:', error.message);
+        console.error('Startup Error (Check MONGO_URI):', error.message);
     }
 };
 
-// ✅ Seed once
 if (process.env.NODE_ENV !== 'test') {
-    seedAdmin();
-}
-
-const PORT = process.env.PORT || 5000;
-
-// ✅ Start server
-if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server listening on port ${PORT}`);
+        startServer();
+    });
 }
 
 module.exports = app;
