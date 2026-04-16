@@ -20,9 +20,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Permissive CORS for Debugging
+// ✅ ROBUST CORS (Manual + Package fallback)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  res.header("Access-Control-Allow-Origin", origin || "*");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  
+  // Handle Preflight (OPTIONS)
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
+// ✅ CORS Package as backup
 app.use(cors({
-  origin: true, // Allow all origins during debugging
+  origin: true,
   credentials: true,
   optionsSuccessStatus: 200
 }));
