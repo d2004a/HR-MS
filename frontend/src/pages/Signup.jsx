@@ -51,6 +51,21 @@ const Signup = () => {
             style={{ backgroundImage: "url('/hrms_bg.png')" }}
         >
             <div className="w-full max-w-md animate-slide-up">
+                {/* 🚀 Render Cold Start Notice */}
+                <div className="mb-6 glass-card p-4 border-l-4 border-amber-400 bg-amber-50/30 flex items-start gap-3 shadow-sm">
+                    <div className="mt-0.5">
+                        <svg className="w-5 h-5 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-semibold text-amber-800 tracking-tight">System Wake-Up Notice</h4>
+                        <p className="text-xs text-amber-700/80 leading-relaxed mt-1">
+                            Our backend is on a free tier. After periods of inactivity, the server may take up to <span className="font-bold underline">50 seconds</span> to respond. We appreciate your patience!
+                        </p>
+                    </div>
+                </div>
+
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-electric to-violet">
                         HRMS

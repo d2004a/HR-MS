@@ -59,9 +59,7 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Resource not found', path: req.originalUrl });
 });
 
-/**
- * 6. SERVER INITIALIZATION
- */
+
 const PORT = process.env.PORT || 10000;
 
 const startServer = async () => {
