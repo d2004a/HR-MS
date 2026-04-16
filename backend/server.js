@@ -36,6 +36,8 @@ app.use((req, res, next) => {
 // ✅ Middleware
 app.use(express.json());
 
+app.options('/api/*', cors());
+
 // ✅ Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/leaves', require('./routes/leaveRoutes'));
