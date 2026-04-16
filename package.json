@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node index.js",
-    "install-backend": "npm install --prefix backend",
-    "postinstall": "npm run install-backend"
+    "build": "npm install --prefix backend",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
