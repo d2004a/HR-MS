@@ -4,3 +4,4 @@ backend/.env
 node_modules/
 frontend/node_modules/
 backend/node_modules/
+INTERVIEW_PREPARATION.md

@@ -42,9 +42,7 @@ const applyLeave = async (req, res) => {
     }
 };
 
-// @desc    Get logged in user's leaves
-// @route   GET /api/leaves
-// @access  Private (Employee)
+
 const getMyLeaves = async (req, res) => {
     try {
         const leaves = await Leave.find({ employee: req.user.id }).sort('-createdAt');

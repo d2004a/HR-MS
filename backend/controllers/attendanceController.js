@@ -1,8 +1,6 @@
 const Attendance = require('../models/Attendance');
 
-// @desc    Mark daily attendance
-// @route   POST /api/attendance
-// @access  Private (Employee)
+
 const markAttendance = async (req, res) => {
     try {
         const { date, status } = req.body;
@@ -54,9 +52,7 @@ const markAttendance = async (req, res) => {
     }
 };
 
-// @desc    Get own attendance history
-// @route   GET /api/attendance
-// @access  Private (Employee)
+
 const getMyAttendance = async (req, res) => {
     try {
         const attendance = await Attendance.find({ employee: req.user.id }).sort('-date');
@@ -66,9 +62,7 @@ const getMyAttendance = async (req, res) => {
     }
 };
 
-// @desc    Get all attendance (Admin)
-// @route   GET /api/admin/attendance
-// @access  Private/Admin
+
 const getAllAttendance = async (req, res) => {
     try {
         // Optional filtering by date or employee id
