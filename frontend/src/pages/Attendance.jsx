@@ -22,13 +22,12 @@ const Attendance = () => {
         }
     };
 
-    const handleMarkAttendance = async () => {
+    const handleMarkAttendance = async (type) => {
         try {
             const res = await api.post('/attendance', {
                 date: new Date(),
-                status: 'present'
+                status: type
             });
-            // Add new record to top of list
             setAttendance([res.data, ...attendance]);
         } catch (err) {
             alert(err.response?.data?.message || 'Failed to mark attendance');
@@ -65,13 +64,22 @@ const Attendance = () => {
                         <p className="text-slate-500">View your daily attendance records</p>
                     </div>
                     {!markedToday && (
-                        <button 
-                            onClick={handleMarkAttendance}
-                            className="btn-success whitespace-nowrap flex items-center shadow-[0_4px_15px_rgba(0,201,167,0.4)]"
-                        >
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            Mark Present Today
-                        </button>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => handleMarkAttendance('present')}
+                                className="btn-success whitespace-nowrap flex items-center shadow-[0_4px_15px_rgba(0,201,167,0.4)]"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Full Day
+                            </button>
+                            <button 
+                                onClick={() => handleMarkAttendance('half-day')}
+                                className="px-4 py-2 text-white rounded-lg bg-amber-500 hover:bg-amber-600 transition-all duration-300 font-medium transform hover:-translate-y-1 whitespace-nowrap flex items-center shadow-[0_4px_15px_rgba(245,158,11,0.4)]"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Half Day
+                            </button>
+                        </div>
                     )}
                 </div>
 
@@ -91,12 +99,14 @@ const Attendance = () => {
                             <p className="text-sm">You haven't marked attendance yet.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 divide-y divide-navy-700/50">
+                        <div className="grid grid-cols-1 divide-y divide-slate-100">
                             {attendance.map((record) => (
                                 <div key={record._id} className="p-4 sm:p-6 flex items-center justify-between hover:bg-white/30 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                                            record.status === 'present' ? 'bg-success/20 text-success' : 'bg-red-500/20 text-red-400'
+                                            record.status === 'present' ? 'bg-success/20 text-success' 
+                                            : record.status === 'half-day' ? 'bg-amber-100 text-amber-600'
+                                            : 'bg-red-500/20 text-red-400'
                                         }`}>
                                             <span className="font-bold text-lg">{new Date(record.date).getDate()}</span>
                                         </div>
@@ -106,7 +116,7 @@ const Attendance = () => {
                                         </div>
                                     </div>
                                     <span className={`badge-${record.status} capitalize min-w-[5rem] text-center`}>
-                                        {record.status}
+                                        {record.status === 'half-day' ? 'Half Day' : record.status}
                                     </span>
                                 </div>
                             ))}

@@ -81,8 +81,12 @@ Seeded automatically on first run:
 
 - **Premium UI & Design:** A complete visual overhaul featuring a modern light theme, abstract backgrounds on auth pages, and glassmorphism.
 - **Role-Based Access:** Dedicated interfaces for Employees and Administrators.
-- **Attendance Tracking:** Simple, one-click daily attendance marking with duplicate prevention.
+- **Attendance Tracking:** Simple, one-click daily attendance marking with duplicate prevention and history views.
 - **Leave Management:** Robust system for applying, reviewing, and tracking leave requests.
+- **Task Management:** Admins can assign tasks to employees with priorities and due dates, while employees can view their assigned tasks.
+- **Company Announcements:** Admins can broadcast priority-colored announcements directly to the Employee Dashboard.
+- **Holiday Calendar:** Unified calendar where admins can schedule public, optional, and company holidays visible to all employees.
+- **Employee Directories & Profiles:** Admins can view detailed profiles (including performance ratings and assigned tasks) for individual employees.
 - **Email Notifications (Simulated):** 
     - Automatically triggers a professional welcome email simulation upon new user registration.
     - Logs detailed email data (Subject, To, Content) to the backend terminal for verification.

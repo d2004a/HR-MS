@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
+const { runAccrualForAllUsers } = require('./utils/leaveAccrual');
 
 dotenv.config();
 const app = express();
@@ -14,7 +15,8 @@ const app = express();
  */
 const allowedOrigins = [
   "https://hr-ms-frontend-ten.vercel.app",
-  "http://localhost:5173"
+  "http://localhost:5173",
+  "http://localhost:5174"
 ];
 
 app.use((req, res, next) => {
@@ -36,7 +38,7 @@ app.use((req, res, next) => {
 /**
  * 2. MIDDLEWARE
  */
-app.use(express.json());
+app.use(express.json({ limit: '5mb' }));
 
 /**
  * 3. HEALTH & STATUS ROUTES
@@ -50,7 +52,10 @@ app.get('/api/health', (req, res) => res.status(200).json({ status: 'active', ti
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/leaves', require('./routes/leaveRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
+app.use('/api/tasks', require('./routes/taskRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/announcements', require('./routes/announcementRoutes'));
+app.use('/api/holidays', require('./routes/holidayRoutes'));
 
 /**
  * 5. ERROR & 404 HANDLERS
@@ -77,11 +82,15 @@ const startServer = async () => {
         fullName: 'System Admin',
         email: 'admin@hrms.com',
         password: hashedPassword,
-        role: 'admin'
+        role: 'admin',
+        leaveYear: new Date().getFullYear()
       });
 
       console.log('[INIT] Admin user seeded');
     }
+
+    // Run monthly leave accrual for all employees
+    await runAccrualForAllUsers();
   } catch (error) {
     console.error('[INIT] Startup Error:', error.message);
   }

@@ -1,5 +1,6 @@
 const Leave = require('../models/Leave');
 const User = require('../models/User');
+const { accrueMonthlyLeave, getLeavesThisMonth } = require('../utils/leaveAccrual');
 
 
 const applyLeave = async (req, res) => {
@@ -21,10 +22,41 @@ const applyLeave = async (req, res) => {
         const timeDiff = Math.abs(end.getTime() - start.getTime());
         const totalDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
+        // Run accrual check first (handles year-end lapse + monthly accrual)
+        await accrueMonthlyLeave(req.user.id);
+
         // Check if user has enough balance
         const user = await User.findById(req.user.id);
         if (user.leaveBalance < totalDays) {
-            return res.status(400).json({ message: 'Insufficient leave balance' });
+            return res.status(400).json({ 
+                message: `Insufficient leave balance. You have ${user.leaveBalance} day(s) available.` 
+            });
+        }
+
+        // Check if user already has an approved leave this month
+        const leavesThisMonth = await getLeavesThisMonth(req.user.id);
+        if (leavesThisMonth >= 1) {
+            return res.status(400).json({ 
+                message: 'You have already taken a leave this month. Unused leaves will roll over to next month.' 
+            });
+        }
+
+        // Also check pending leaves for this month to prevent double-booking
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        
+        const pendingLeavesThisMonth = await Leave.find({
+            employee: req.user.id,
+            status: 'pending',
+            startDate: { $lte: endOfMonth },
+            endDate: { $gte: startOfMonth }
+        });
+
+        if (pendingLeavesThisMonth.length > 0) {
+            return res.status(400).json({ 
+                message: 'You already have a pending leave request for this month.' 
+            });
         }
 
         const leave = await Leave.create({
@@ -47,6 +79,39 @@ const getMyLeaves = async (req, res) => {
     try {
         const leaves = await Leave.find({ employee: req.user.id }).sort('-createdAt');
         res.status(200).json(leaves);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Get leave stats for current month
+// @route   GET /api/leaves/stats
+// @access  Private (Employee)
+const getLeaveStats = async (req, res) => {
+    try {
+        // Run accrual check
+        await accrueMonthlyLeave(req.user.id);
+        const user = await User.findById(req.user.id);
+        
+        const leavesThisMonth = await getLeavesThisMonth(req.user.id);
+        
+        // Count total approved leaves this year
+        const yearStart = new Date(new Date().getFullYear(), 0, 1);
+        const yearEnd = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59);
+        const approvedThisYear = await Leave.countDocuments({
+            employee: req.user.id,
+            status: 'approved',
+            startDate: { $gte: yearStart, $lte: yearEnd }
+        });
+
+        res.status(200).json({
+            leaveBalance: user.leaveBalance,
+            leavesUsedThisMonth: leavesThisMonth,
+            maxPerMonth: 1,
+            leavesUsedThisYear: approvedThisYear,
+            leaveYear: user.leaveYear,
+            canApplyThisMonth: leavesThisMonth < 1
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
@@ -126,7 +191,7 @@ const deleteLeave = async (req, res) => {
             return res.status(400).json({ message: 'Cannot cancel an processed leave request' });
         }
 
-        await leave.remove();
+        await Leave.findByIdAndDelete(req.params.id);
 
         res.status(200).json({ message: 'Leave request cancelled' });
     } catch (error) {
@@ -190,6 +255,7 @@ const updateLeaveStatus = async (req, res) => {
 module.exports = {
     applyLeave,
     getMyLeaves,
+    getLeaveStats,
     updateLeave,
     deleteLeave,
     getAllLeaves,

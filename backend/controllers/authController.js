@@ -45,6 +45,7 @@ const registerUser = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,
+                profilePicture: user.profilePicture,
                 token: generateToken(user._id),
             });
         } else {
@@ -69,6 +70,7 @@ const loginUser = async (req, res) => {
                 fullName: user.fullName,
                 email: user.email,
                 role: user.role,
+                profilePicture: user.profilePicture,
                 token: generateToken(user._id),
             });
         } else {
@@ -89,8 +91,70 @@ const getMe = async (req, res) => {
     }
 };
 
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'Please provide current and new password' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: 'New password must be at least 6 characters' });
+        }
+
+        const user = await User.findById(req.user.id).select('+password');
+
+        // Verify current password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Current password is incorrect' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
+// @desc    Update profile picture (Base64)
+// @route   PUT /api/auth/profile-picture
+// @access  Private
+const updateProfilePicture = async (req, res) => {
+    try {
+        const { profilePicture } = req.body;
+
+        if (!profilePicture) {
+            return res.status(400).json({ message: 'No image provided' });
+        }
+
+        // Basic size check (~2MB in base64)
+        if (profilePicture.length > 2 * 1024 * 1024 * 1.37) {
+            return res.status(400).json({ message: 'Image too large. Maximum size is 2MB.' });
+        }
+
+        const user = await User.findById(req.user.id);
+        user.profilePicture = profilePicture;
+        await user.save();
+
+        res.status(200).json({ message: 'Profile picture updated', profilePicture: user.profilePicture });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
     loginUser,
     getMe,
+    changePassword,
+    updateProfilePicture,
 };

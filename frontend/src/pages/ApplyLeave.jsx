@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
@@ -12,7 +12,20 @@ const ApplyLeave = () => {
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [leaveStats, setLeaveStats] = useState(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await api.get('/leaves/stats');
+                setLeaveStats(res.data);
+            } catch (err) {
+                console.error('Failed to fetch leave stats');
+            }
+        };
+        fetchStats();
+    }, []);
 
     const calculateDays = () => {
         if (!formData.startDate || !formData.endDate) return 0;
@@ -59,6 +72,30 @@ const ApplyLeave = () => {
                     </button>
                     <h1 className="text-3xl font-bold text-slate-800 mt-4">Apply for Leave</h1>
                 </div>
+
+                {/* Leave Policy Info */}
+                {leaveStats && (
+                    <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
+                        leaveStats.canApplyThisMonth 
+                            ? 'bg-electric/5 border-electric/20' 
+                            : 'bg-amber-50 border-amber-200'
+                    }`}>
+                        <svg className={`w-5 h-5 shrink-0 mt-0.5 ${leaveStats.canApplyThisMonth ? 'text-electric' : 'text-amber-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="text-sm">
+                            <p className={`font-semibold mb-1 ${leaveStats.canApplyThisMonth ? 'text-slate-700' : 'text-amber-700'}`}>
+                                {leaveStats.canApplyThisMonth ? 'Monthly Leave Available' : 'Monthly Leave Already Used'}
+                            </p>
+                            <p className={`${leaveStats.canApplyThisMonth ? 'text-slate-500' : 'text-amber-600'}`}>
+                                {leaveStats.canApplyThisMonth 
+                                    ? `You can take 1 leave this month. Balance: ${leaveStats.leaveBalance} day(s). Unused leaves roll over to the next month.`
+                                    : `You've already used your leave for this month. Your remaining ${leaveStats.leaveBalance} day(s) will roll over. All leaves lapse at year-end.`
+                                }
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 <div className="glass-card p-6 md:p-8 animate-slide-up">
                     {error && (

@@ -19,8 +19,8 @@ const markAttendance = async (req, res) => {
             return res.status(400).json({ message: 'Cannot mark attendance for future dates' });
         }
 
-        if (!['present', 'absent'].includes(status)) {
-            return res.status(400).json({ message: 'Invalid status' });
+        if (!['present', 'absent', 'half-day'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status. Use present, absent, or half-day.' });
         }
 
         // Check if already marked for this date

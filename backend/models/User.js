@@ -34,7 +34,25 @@ const userSchema = new mongoose.Schema({
     },
     leaveBalance: {
         type: Number,
-        default: 20
+        default: 1
+    },
+    lastLeaveAccrualDate: {
+        type: Date,
+        default: null
+    },
+    leaveYear: {
+        type: Number,
+        default: () => new Date().getFullYear()
+    },
+    rating: {
+        type: Number,
+        min: 0,
+        max: 5,
+        default: 0
+    },
+    profilePicture: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true
