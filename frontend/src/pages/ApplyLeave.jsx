@@ -89,8 +89,8 @@ const ApplyLeave = () => {
                             </p>
                             <p className={`${leaveStats.canApplyThisMonth ? 'text-slate-500' : 'text-amber-600'}`}>
                                 {leaveStats.canApplyThisMonth 
-                                    ? `You can take 1 leave this month. Balance: ${leaveStats.leaveBalance} day(s). Unused leaves roll over to the next month.`
-                                    : `You've already used your leave for this month. Your remaining ${leaveStats.leaveBalance} day(s) will roll over. All leaves lapse at year-end.`
+                                    ? `You can take ${leaveStats.maxPerMonth - leaveStats.leavesUsedThisMonth} more leave(s) this month. Balance: ${leaveStats.leaveBalance} day(s). Unused leaves roll over to the next month.`
+                                    : `You've already used your ${leaveStats.maxPerMonth} leaves for this month. Your remaining ${leaveStats.leaveBalance} day(s) will roll over. All leaves lapse at year-end.`
                                 }
                             </p>
                         </div>

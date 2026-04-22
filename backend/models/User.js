@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema({
     },
     leaveBalance: {
         type: Number,
-        default: 1
+        default: 0
     },
     lastLeaveAccrualDate: {
         type: Date,

@@ -33,15 +33,11 @@ const applyLeave = async (req, res) => {
             });
         }
 
-        // Check if user already has an approved leave this month
-        const leavesThisMonth = await getLeavesThisMonth(req.user.id);
-        if (leavesThisMonth >= 1) {
-            return res.status(400).json({ 
-                message: 'You have already taken a leave this month. Unused leaves will roll over to next month.' 
-            });
-        }
-
-        // Also check pending leaves for this month to prevent double-booking
+        // Check if user already has taken or applied for leaves this month
+        // We allow 2 leaves per month now to accommodate 20/year
+        const leavesThisMonthCount = await getLeavesThisMonth(req.user.id);
+        
+        // Also check pending leaves for this month
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
@@ -53,11 +49,16 @@ const applyLeave = async (req, res) => {
             endDate: { $gte: startOfMonth }
         });
 
-        if (pendingLeavesThisMonth.length > 0) {
+        const totalUsedOrPendingThisMonth = leavesThisMonthCount + pendingLeavesThisMonth.length;
+        if (totalUsedOrPendingThisMonth >= 2) {
             return res.status(400).json({ 
-                message: 'You already have a pending leave request for this month.' 
+                message: 'Monthly leave limit reached (2 leaves per month). Unused leaves will roll over.' 
             });
         }
+
+        // Deduct balance immediately
+        user.leaveBalance = Math.round((user.leaveBalance - totalDays) * 100) / 100;
+        await user.save();
 
         const leave = await Leave.create({
             employee: req.user.id,
@@ -107,10 +108,10 @@ const getLeaveStats = async (req, res) => {
         res.status(200).json({
             leaveBalance: user.leaveBalance,
             leavesUsedThisMonth: leavesThisMonth,
-            maxPerMonth: 1,
+            maxPerMonth: 2,
             leavesUsedThisYear: approvedThisYear,
             leaveYear: user.leaveYear,
-            canApplyThisMonth: leavesThisMonth < 1
+            canApplyThisMonth: leavesThisMonth < 2
         });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -153,9 +154,14 @@ const updateLeave = async (req, res) => {
             
             // Recheck balance
             const user = await User.findById(req.user.id);
-            if (user.leaveBalance < totalDays) {
+            const daysDiff = totalDays - leave.totalDays;
+            if (user.leaveBalance < daysDiff) {
                 return res.status(400).json({ message: 'Insufficient leave balance' });
             }
+            
+            // Adjust balance
+            user.leaveBalance = Math.round((user.leaveBalance - daysDiff) * 100) / 100;
+            await user.save();
         }
 
         const updatedLeave = await Leave.findByIdAndUpdate(
@@ -189,6 +195,13 @@ const deleteLeave = async (req, res) => {
         // Can only cancel pending leaves
         if (leave.status !== 'pending') {
             return res.status(400).json({ message: 'Cannot cancel an processed leave request' });
+        }
+
+        // Refund balance
+        const user = await User.findById(req.user.id);
+        if (user) {
+            user.leaveBalance = Math.round((user.leaveBalance + leave.totalDays) * 100) / 100;
+            await user.save();
         }
 
         await Leave.findByIdAndDelete(req.params.id);
@@ -227,19 +240,21 @@ const updateLeaveStatus = async (req, res) => {
             return res.status(400).json({ message: 'Invalid status' });
         }
 
-        // If previously pending and now approving, deduct balance
-        if (leave.status === 'pending' && status === 'approved') {
+        // If previously NOT rejected and now rejecting, refund balance
+        if (leave.status !== 'rejected' && status === 'rejected') {
+            const user = await User.findById(leave.employee);
+            if (user) {
+                user.leaveBalance = Math.round((user.leaveBalance + leave.totalDays) * 100) / 100;
+                await user.save();
+            }
+        } 
+        // If previously rejected and now approving/pending, deduct balance again
+        else if (leave.status === 'rejected' && status !== 'rejected') {
             const user = await User.findById(leave.employee);
             if (user.leaveBalance < leave.totalDays) {
                 return res.status(400).json({ message: 'Employee has insufficient leave balance' });
             }
-            user.leaveBalance -= leave.totalDays;
-            await user.save();
-        } 
-        // If previously approved and now rejecting/pending (edge case or undo), refund balance
-        else if (leave.status === 'approved' && status !== 'approved') {
-            const user = await User.findById(leave.employee);
-            user.leaveBalance += leave.totalDays;
+            user.leaveBalance = Math.round((user.leaveBalance - leave.totalDays) * 100) / 100;
             await user.save();
         }
 

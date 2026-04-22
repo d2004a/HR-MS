@@ -31,7 +31,8 @@ const accrueMonthlyLeave = async (userId) => {
         }
     }
 
-    // Accrue: add 1 leave for each missed month since last accrual
+    // Accrue: add 1.67 leaves for each missed month since last accrual (approx 20/year)
+    const accrualRate = 1.67;
     let monthsToAccrue = 1;
     
     if (user.lastLeaveAccrualDate) {
@@ -44,13 +45,13 @@ const accrueMonthlyLeave = async (userId) => {
     // Cap at 12 months max accrual per year
     monthsToAccrue = Math.min(monthsToAccrue, 12);
     
-    // Max balance cannot exceed 12 (1 per month for the year)
-    const maxBalance = 12;
-    const newBalance = Math.min(user.leaveBalance + monthsToAccrue, maxBalance);
+    // Max balance cannot exceed 20
+    const maxBalance = 20;
+    const newBalance = Math.min(user.leaveBalance + (monthsToAccrue * accrualRate), maxBalance);
     
-    console.log(`[ACCRUAL] ${user.fullName}: +${monthsToAccrue} leave(s), balance: ${user.leaveBalance} → ${newBalance}`);
+    console.log(`[ACCRUAL] ${user.fullName}: +${(monthsToAccrue * accrualRate).toFixed(2)} leave(s), balance: ${user.leaveBalance} → ${newBalance.toFixed(2)}`);
     
-    user.leaveBalance = newBalance;
+    user.leaveBalance = Math.round(newBalance * 100) / 100; // Round to 2 decimal places
     user.lastLeaveAccrualDate = now;
     user.leaveYear = currentYear;
     await user.save();

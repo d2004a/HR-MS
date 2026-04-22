@@ -119,8 +119,8 @@ const EmployeeDashboard = () => {
                                 </div>
                                 <p className="text-xs text-slate-400">
                                     {ls.canApplyThisMonth 
-                                        ? '✓ You can apply for 1 leave this month' 
-                                        : '✗ Monthly leave already used — rolls over next month'}
+                                        ? `✓ You can apply for ${ls.maxPerMonth - ls.leavesUsedThisMonth} more leave(s) this month` 
+                                        : '✗ Monthly leave limit reached — rolls over next month'}
                                 </p>
                                 <p className="text-xs text-slate-400">
                                     Year total: {ls.leavesUsedThisYear} leave(s) used in {ls.leaveYear}
